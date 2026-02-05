@@ -51,7 +51,7 @@ st.markdown(
     """
     <h1 style="text-align:center;">☀️ Solar Energy Production Predictor</h1>
     <p style="text-align:center;color:gray;">
-    XGBoost Model | 93% R² | Rajasthan Dataset
+    XGBoost Model | Test data R² = 0.994608501, MAE = 2.667902073 | Rajasthan Dataset
     </p>
     """,
     unsafe_allow_html=True
@@ -179,6 +179,7 @@ with col2:
         unsafe_allow_html=True
     )
 st.markdown("---")
+
 
 
 
