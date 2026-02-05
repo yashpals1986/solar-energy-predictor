@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # ===============================
 # Page Config
 # ===============================
@@ -14,13 +13,11 @@ st.set_page_config(
     layout="wide"
 )
 
-
 # ===============================
 # Load Resources
 # ===============================
 @st.cache_resource
 def load_resources():
-
     model = joblib.load("xgboost_v1.0.pkl")
     train_df = pd.read_csv("train.csv")
 
@@ -38,18 +35,14 @@ def load_resources():
     # Error stats
     train_df["Predicted"] = model.predict(train_df[ALL_FEATURES])
     train_df["Error"] = abs(train_df["Predicted"] - train_df["Predicted_Energy"])
-    train_df["Error_Pct"] = (
-        train_df["Error"] / (train_df["Predicted_Energy"] + 0.1)
-    ) * 100
+    train_df["Error_Pct"] = (train_df["Error"] / (train_df["Predicted_Energy"] + 0.1)) * 100
 
     ERROR_BY_HOUR = train_df.groupby("Hour")["Error"].mean().to_dict()
     ERROR_PCT_BY_HOUR = train_df.groupby("Hour")["Error_Pct"].mean().to_dict()
 
     return model, train_df, ALL_FEATURES, DEFAULT_DICT, ERROR_BY_HOUR, ERROR_PCT_BY_HOUR
 
-
 model, train_df, FEATURES, DEFAULTS, ERR_HOUR, ERR_PCT = load_resources()
-
 
 # ===============================
 # Header
@@ -63,7 +56,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 
 # ===============================
 # Sidebar Inputs
@@ -117,7 +109,6 @@ if st.sidebar.button("🔮 Predict"):
     input_df = pd.DataFrame([input_dict])[FEATURES]
     pred = model.predict(input_df)[0]
 
-
     # ===============================
     # KPIs
     # ===============================
@@ -147,50 +138,47 @@ if st.sidebar.button("🔮 Predict"):
         """
     )
 
-
     # ===============================
-    # Hourly Error Chart
+    # Charts SIDE BY SIDE
     # ===============================
-    st.subheader("📈 Hourly Prediction Error")
+    col1, col2 = st.columns(2)
 
-    hours = list(ERR_HOUR.keys())
-    errors = list(ERR_HOUR.values())
+    with col1:
+        st.subheader("📈 Hourly Prediction Error")
+        hours = list(ERR_HOUR.keys())
+        errors = list(ERR_HOUR.values())
 
-    fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(hours, errors, marker="o", linewidth=2, markersize=6)
+        ax.set_xlabel("Hour")
+        ax.set_ylabel("Mean Error (kWh)")
+        ax.set_title("Error vs Hour")
+        ax.grid(True, alpha=0.3)
+        st.pyplot(fig)
 
-    ax.plot(hours, errors, marker="o")
-    ax.set_xlabel("Hour")
-    ax.set_ylabel("Mean Error (kWh)")
-    ax.set_title("Error vs Hour")
-
-    st.pyplot(fig)
-
-
-    # ===============================
-    # Historical Distribution
-    # ===============================
-    st.subheader("📉 Energy Distribution (Training Data)")
-
-    fig2, ax2 = plt.subplots()
-
-    ax2.hist(train_df["Predicted_Energy"], bins=40)
-    ax2.set_xlabel("Energy (kWh)")
-    ax2.set_ylabel("Frequency")
-
-    st.pyplot(fig2)
-
+    with col2:
+        st.subheader("📉 Energy Distribution")
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        ax2.hist(train_df["Predicted_Energy"], bins=40, alpha=0.7, color='#ff9500')
+        ax2.set_xlabel("Energy (kWh)")
+        ax2.set_ylabel("Frequency")
+        ax2.set_title("Training Data Distribution")
+        ax2.grid(True, alpha=0.3)
+        st.pyplot(fig2)
 
 # ===============================
-# Footer
+# Footer - PERFECTLY CENTERED
 # ===============================
 st.markdown("---")
-st.markdown(
-    "**Developed by Yashpal Suwansia | IIT Bombay 2010**", 
-    unsafe_allow_html=False
-)
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.markdown(
+        "<p style='text-align: center; color: gray; font-size: 14px;'>"
+        "**Developed by Yashpal Suwansia | IIT Bombay 2010**"
+        "</p>",
+        unsafe_allow_html=True
+    )
 st.markdown("---")
-
-
 
 
 
