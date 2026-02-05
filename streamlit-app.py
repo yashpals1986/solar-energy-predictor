@@ -132,7 +132,7 @@ if st.sidebar.button("🔮 Predict"):
         f"""
         📊 **Expected Accuracy**
 
-        • Typical Error: ± {err:.1f} kWh          • Accuracy: {acc:.1f} %          • Samples: {len(train_df[train_df["Hour"] == hour])}
+        | Typical Error: ± {err:.1f} kWh |          | Accuracy: {acc:.1f} % |         | Samples: {len(train_df[train_df["Hour"] == hour])} |
         """
     )
 
@@ -177,6 +177,7 @@ with col2:
         unsafe_allow_html=True
     )
 st.markdown("---")
+
 
 
 
