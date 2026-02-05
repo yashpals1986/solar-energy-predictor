@@ -58,7 +58,7 @@ st.markdown(
     """
     <h1 style="text-align:center;">☀️ Solar Energy Production Predictor</h1>
     <p style="text-align:center;color:gray;">
-    XGBoost Model | 93% R² | Rajasthan Dataset (8760 hrs)
+    XGBoost Model | 93% R² | Rajasthan Dataset
     </p>
     """,
     unsafe_allow_html=True
@@ -125,8 +125,7 @@ if st.sidebar.button("🔮 Predict"):
 
     c1.metric("⚡ Energy (kWh)", f"{pred:.2f}")
     c2.metric("🕒 Time", time_display)
-    c3.metric("🌞 GHI", f"{ghi:.1f}")
-
+    
 
     # ===============================
     # Error Info
@@ -185,13 +184,12 @@ if st.sidebar.button("🔮 Predict"):
 # Footer
 # ===============================
 st.markdown("---")
-
 st.markdown(
-    """
-    <p style="text-align:center;font-weight:bold;">
-    Developed by Yashpal Suwansia | IIT Bombay 2010
-    </p>
-    <p""")
+    "**Developed by Yashpal Suwansia | IIT Bombay 2010**", 
+    unsafe_allow_html=False
+)
+st.markdown("---")
+
 
 
 
