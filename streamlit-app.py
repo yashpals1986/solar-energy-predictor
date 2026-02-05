@@ -18,7 +18,7 @@ st.set_page_config(
 # ===============================
 @st.cache_resource
 def load_resources():
-    model = joblib.load("xgboost_v1.0.pkl")
+    model = joblib.load("xgboost_tuned_v2.0.pkl")
     train_df = pd.read_csv("train.csv")
 
     ALL_FEATURES = [
@@ -177,6 +177,7 @@ with col2:
         unsafe_allow_html=True
     )
 st.markdown("---")
+
 
 
 
