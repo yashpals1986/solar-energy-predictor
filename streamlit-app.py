@@ -72,7 +72,7 @@ st.sidebar.header("⚙️ Input Parameters")
 
 ghi = st.sidebar.number_input("Clearsky GHI (W/m²)", 0.0, 1200.0, 800.0)
 dni = st.sidebar.number_input("Clearsky DNI (W/m²)", 0.0, 1200.0, 850.0)
-dhi = st.sidebar.number_input("Clearsky DHI (W/m²)", 0.0, 500.0, 120.0)
+dhi = st.sidebar.number_input("Clearsky DHI (W/m²)", 0.0, 544.0, 120.0)
 
 tilt = st.sidebar.slider("Best Tilt (°)", 0.0, 90.0, 30.0)
 
@@ -82,10 +82,10 @@ minute = st.sidebar.slider("Minute", 0, 59, 0)
 zenith = st.sidebar.slider("Zenith (°)", 0.0, 180.0, 30.0)
 azimuth = st.sidebar.slider("Azimuth (°)", 0.0, 360.0, 180.0)
 
-azimuth_bin = st.sidebar.slider("Azimuth Bin", 0.0, 360.0, 180.0, step=5.0)
+azimuth_bin = st.sidebar.slider("Azimuth Bin", 0.0, 360.0, 180.0, step=0.5)
 zenith_bin = st.sidebar.slider("Zenith Bin", 0.0, 180.0, 30.0, step=2.0)
 
-elevation = st.sidebar.slider("Elevation (°)", -90.0, 90.0, 60.0)
+elevation = st.sidebar.slider("Elevation (°)", -90.0, 90.0, 60.0, step=0.5)
 
 
 # ===============================
@@ -189,6 +189,7 @@ st.markdown(
     unsafe_allow_html=False
 )
 st.markdown("---")
+
 
 
 
