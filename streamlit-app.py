@@ -191,6 +191,7 @@ st.markdown(
     <p style="text-align:center;font-weight:bold;">
     Developed by Yashpal Suwansia | IIT Bombay 2010
     </p>
-    <p"""
+    <p""")
+
 
 
