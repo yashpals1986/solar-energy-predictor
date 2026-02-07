@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # ===============================
-# Model Download
+# Download & Load Model
 # ===============================
 @st.cache_resource
 def download_model_from_huggingface():
@@ -27,7 +27,7 @@ def download_model_from_huggingface():
     url = "https://huggingface.co/ysuwansia/solar/resolve/main/final_production_model.pkl"
 
     try:
-        with st.spinner("⏳ Downloading model..."):
+        with st.spinner("⏳ Downloading model (first time only)..."):
             response = requests.get(url, stream=True)
             response.raise_for_status()
 
@@ -38,7 +38,7 @@ def download_model_from_huggingface():
         return joblib.load("model.pkl")
 
     except Exception as e:
-        st.error(f"Model download failed: {e}")
+        st.error(f"❌ Model download failed: {e}")
         return None
 
 
@@ -46,19 +46,13 @@ model = download_model_from_huggingface()
 
 
 # ===============================
-# Feature List (VERY IMPORTANT)
+# Load Feature Names From Model
 # ===============================
-FEATURES = [
-    "temperature",
-    "Aerosol Optical Depth",
-    "zenith",
-    "azimuth",
-    "elevation",
-    "best_tilt",
-    "azimuth_bin",
-    "zenith_bin",
-    "hour"
-]
+if model is not None and hasattr(model, "feature_names_in_"):
+    FEATURES = list(model.feature_names_in_)
+else:
+    st.error("❌ Model does not contain feature names.")
+    st.stop()
 
 
 # ===============================
@@ -67,7 +61,7 @@ FEATURES = [
 st.markdown("""
 <h1 style="text-align:center;">☀️ Solar Energy Production Predictor</h1>
 <p style="text-align:center;color:gray;">
-RF Model | 93% R² | Rajasthan Dataset
+RF Model | Rajasthan Dataset
 </p>
 """, unsafe_allow_html=True)
 
@@ -94,59 +88,4 @@ zenith_bin = st.sidebar.slider("Zenith Bin", 0.0, 360.0, 180.0)
 best_tilt = st.sidebar.slider("Best Tilt", 0.0, 360.0, 180.0)
 
 
-# ===============================
-# Prediction
-# ===============================
-if st.sidebar.button("🔮 Predict"):
-
-    if model is None:
-        st.error("Model not loaded!")
-        st.stop()
-
-    # Time display
-    time_display = f"{hour:02d}:{minute:02d}"
-
-    # Input dictionary
-    input_data = {
-        "temperature": [temperature],
-        "Aerosol Optical Depth": [aerosol],
-        "zenith": [zenith],
-        "azimuth": [azimuth],
-        "elevation": [elevation],
-        "best_tilt": [best_tilt],
-        "azimuth_bin": [azimuth_bin],
-        "zenith_bin": [zenith_bin],
-        "hour": [hour]
-    }
-
-    # DataFrame
-    input_df = pd.DataFrame(input_data)[FEATURES]
-
-    # Prediction
-    prediction = model.predict(input_df)[0]
-
-
-    # ===============================
-    # KPIs
-    # ===============================
-    c1, c2 = st.columns(2)
-
-    c1.metric("⚡ Energy (kWh)", f"{prediction:.2f}")
-    c2.metric("🕒 Time", time_display)
-
-
-# ===============================
-# Footer
-# ===============================
-st.markdown("---")
-
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col2:
-    st.markdown("""
-    <p style='text-align:center;color:gray;font-size:14px;'>
-    Developed by Yashpal Suwansia | IIT Bombay 2010
-    </p>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
+# =============
