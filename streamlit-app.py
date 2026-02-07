@@ -88,4 +88,72 @@ zenith_bin = st.sidebar.slider("Zenith Bin", 0.0, 360.0, 180.0)
 best_tilt = st.sidebar.slider("Best Tilt", 0.0, 360.0, 180.0)
 
 
-# =============
+# ===============================
+# Predict Button
+# ===============================
+if st.sidebar.button("🔮 Predict"):
+
+    if model is None:
+        st.error("❌ Model not loaded")
+        st.stop()
+
+    # Time
+    time_display = f"{hour:02d}:{minute:02d}"
+
+
+    # Input Data (MATCH MODEL FEATURES)
+    input_data = {
+        "temperature": [temperature],
+        "Aerosol Optical Depth": [aerosol],
+        "zenith": [zenith],
+        "azimuth": [azimuth],
+        "elevation": [elevation],
+        "best_tilt": [best_tilt],
+        "azimuth_bin": [azimuth_bin],
+        "zenith_bin": [zenith_bin],
+        "hour": [hour]
+    }
+
+
+    # Check Missing Features
+    missing = set(FEATURES) - set(input_data.keys())
+
+    if missing:
+        st.error(f"❌ Missing features: {missing}")
+        st.stop()
+
+
+    # Create DataFrame
+    input_df = pd.DataFrame(input_data)[FEATURES]
+
+
+    # Prediction
+    prediction = model.predict(input_df)[0]
+
+
+    # ===============================
+    # Output
+    # ===============================
+    c1, c2 = st.columns(2)
+
+    c1.metric("⚡ Energy (kWh)", f"{prediction:.2f}")
+    c2.metric("🕒 Time", time_display)
+
+    st.success("✅ Prediction Successful")
+
+
+# ===============================
+# Footer
+# ===============================
+st.markdown("---")
+
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st.markdown("""
+    <p style='text-align:center;color:gray;font-size:14px;'>
+    Developed by Yashpal Suwansia | IIT Bombay 2010
+    </p>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
