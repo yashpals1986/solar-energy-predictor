@@ -9,10 +9,6 @@ from datetime import datetime
 # Page config
 st.set_page_config(page_title="Solar Energy Predictor", page_icon="☀️", layout="wide")
 
-
-
-
-
 # At the top, replace the download function:
 
 @st.cache_resource
@@ -33,14 +29,6 @@ def download_model_from_huggingface():
     return joblib.load('model.pkl')
 
 model = download_model_from_huggingface()
-
-
-
-
-
-
-
-
 
 
 # Header
@@ -65,18 +53,11 @@ with col1:
     pressure = st.slider("Pressure (hPa)", 900.0, 1100.0, 1013.0)
     wind_speed = st.slider("Wind Speed (m/s)", 0.0, 30.0, 5.0)
     wind_direction = st.slider("Wind Direction (°)", 0, 360, 180)
-    dew_point = st.slider("Dew Point (°C)", -30.0, 40.0, 15.0)
-
+    
 with col2:
     st.subheader("🌩️ Atmosphere")
-    cloud_type = st.selectbox("Cloud Type", list(range(11)))
     aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
-    precipitable_water = st.slider("Precipitable Water", 0.0, 10.0, 2.0)
-    
-    st.subheader("📅 Date/Time")
-    date = st.date_input("Date", datetime.now())
-    hour = st.slider("Hour", 0, 23, 12)
-
+         
 with col3:
     st.subheader("🔆 Solar Position")
     zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 30.0)
@@ -133,4 +114,5 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+
 
