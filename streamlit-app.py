@@ -76,13 +76,6 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
     input_data = pd.DataFrame({
         'Temperature': [temperature],
         'Aerosol Optical Depth': [aerosol],
-        'Dew Point': [dew_point],
-        'Cloud Type': [cloud_type],
-        'Relative Humidity': [humidity],
-        'Pressure': [pressure],
-        'Wind Speed': [wind_speed],
-        'Wind Direction': [wind_direction],
-        'Precipitable Water': [precipitable_water],
         'zenith': [zenith],
         'azimuth': [azimuth],
         'elevation': [elevation],
@@ -114,5 +107,6 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+
 
 
