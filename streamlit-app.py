@@ -48,26 +48,18 @@ st.markdown(
 # ===============================
 # Sidebar Inputs
 # ===============================
-'Hour': [hour], 
-'Temperature': [temperature], 
-'elevation': [elevation], 
-'Aerosol Optical Depth': [aerosol],  
-'zenith': [zenith],  
-'azimuth': [azimuth],           
-'Best_Tilt': [best_tilt],       
-'Azimuth_Bin': [azimuth_bin],        
-'Zenith_Bin': [zenith_bin],        
+   
 
 st.sidebar.header("⚙️ Input Parameters")
-Hour = st.sidebar.number_input("Hour", 0.0, 23, 12)
-Temperature = st.sidebar.number_input("Temperature(degree)", 0.0, 50, 25)
+hour = st.sidebar.number_input("hour", 0.0, 23, 12)
+temperature = st.sidebar.number_input("temperature(degree)", 0.0, 50, 25)
 elevation = st.sidebar.number_input("elevation", -90.0, 90.0, 0.0)
-Aerosol Optical Depth = st.sidebar.slider("Aerosol Optical Depth (°)", 0.0, 1.5, 0.7)
+aerosol = st.sidebar.slider("Aerosol Optical Depth (°)", 0.0, 1.5, 0.7)
 azimuth = st.sidebar.slider("azimuth", 0, 59, 0)
-Azimuth_Bin = st.sidebar.slider("Azimuth_Bin (°)", 0.0, 180.0, 30.0)
+azimuth_bin = st.sidebar.slider("azimuth_bin (°)", 0.0, 180.0, 30.0)
 zenith = st.sidebar.slider("zenith", 0, 23, 12)
-Zenith_Bin = st.sidebar.slider("Zenith_Bin (°)", 0.0, 360.0, 180.0)
-Best_Tilt = st.sidebar.slider("Best_Tilt", 0.0, 360.0, 180.0, step=0.5)
+zenith_bin = st.sidebar.slider("Zenith_Bin (°)", 0.0, 360.0, 180.0)
+best_tilt = st.sidebar.slider("best_tilt", 0.0, 360.0, 180.0, step=0.5)
 
 # ===============================
 # Prediction
@@ -82,23 +74,16 @@ if st.sidebar.button("🔮 Predict"):
 
     # Update
     input_dict.update({
-        'Temperature': [temperature],
+        'temperature': [temperature],
         'Aerosol Optical Depth': [aerosol],
         'zenith': [zenith],
         'azimuth': [azimuth],
         'elevation': [elevation],
-        'Best_Tilt': [best_tilt],
-        'Azimuth_Bin': [azimuth_bin],
-        'Zenith_Bin': [zenith_bin],
-        'Hour': [hour]
+        'best_tilt': [best_tilt],
+        'azimuth_bin': [azimuth_bin],
+        'zenith_bin': [zenith_bin],
+        'hour': [hour]
     })
-
-
-
-
-
-
-
 
 
     
@@ -127,6 +112,7 @@ with col2:
         unsafe_allow_html=True
     )
 st.markdown("---")
+
 
 
 
