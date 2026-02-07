@@ -49,15 +49,13 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.subheader("🌦️ Weather")
     temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
-    humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
-    wind_speed = st.slider("Wind Speed (m/s)", 0.0, 30.0, 5.0)
-    wind_direction = st.slider("Wind Direction (°)", 0, 360, 180)
-    
+       
 with col2:
     st.subheader("🌩️ Atmosphere")
     aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
-    hour = st.sidebar.slider("Hour", 0, 23, 12)
-    minute = st.sidebar.slider("Minute", 0, 59, 0)     
+    hour = st.slider("Hour", 0, 23, 12)  # ✅ FIXED: Moved from sidebar, lowercase 'h'
+    minute = st.slider("Minute", 0, 59, 0)  # ✅ FIXED: Moved from sidebar, lowercase 'm'
+     
 with col3:
     st.subheader("🔆 Solar Position")
     zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 30.0)
@@ -82,9 +80,9 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
         'Best_Tilt': [best_tilt],
         'Azimuth_Bin': [azimuth_bin],
         'Zenith_Bin': [zenith_bin],
-        'Hour': [Hour],
-        'Minute': [Minute],
-         })
+        'Hour': [hour],      # ✅ FIXED: lowercase 'hour'
+        'Minute': [minute],  # ✅ FIXED: lowercase 'minute'
+    })
     
     # Make prediction
     prediction = model.predict(input_data)[0]
@@ -96,20 +94,7 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
     col1.metric("Predicted Energy", f"{prediction:.2f} Wh/m²")
     col2.metric("For 1kW System", f"{prediction * 0.001:.2f} Wh")
     
-    if prediction > 800:
-        quality = "Excellent ⭐⭐⭐"
-    elif prediction > 500:
-        quality = "Good ⭐⭐"
-    elif prediction > 200:
-        quality = "Fair ⭐"
-    else:
-        quality = "Poor ❌"
-    col3.metric("Quality", quality)
-
+   
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
-
-
-
-
