@@ -43,10 +43,6 @@ model = download_model_from_huggingface()
 
 
 
-
-
-
-
 # Header
 st.title("☀️ Solar Energy Prediction System")
 st.markdown("Predict solar energy generation using Machine Learning")
@@ -54,8 +50,8 @@ st.markdown("Predict solar energy generation using Machine Learning")
 # Sidebar info
 st.sidebar.title("📊 Model Info")
 st.sidebar.metric("Model", "Random Forest")
-st.sidebar.metric("Test MAE", "10.83")
-st.sidebar.metric("Accuracy", "93.4%")
+st.sidebar.metric("Tuned Test MAE", "10.83")
+st.sidebar.metric("Tuned Accuracy", "93.4%")
 
 # Main prediction interface
 st.header("🔮 Energy Prediction")
@@ -63,7 +59,7 @@ st.header("🔮 Energy Prediction")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("🌡️ Weather")
+    st.subheader("🌦️ Weather")
     temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
     humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
     pressure = st.slider("Pressure (hPa)", 900.0, 1100.0, 1013.0)
@@ -72,7 +68,7 @@ with col1:
     dew_point = st.slider("Dew Point (°C)", -30.0, 40.0, 15.0)
 
 with col2:
-    st.subheader("☁️ Atmosphere")
+    st.subheader("🌩️ Atmosphere")
     cloud_type = st.selectbox("Cloud Type", list(range(11)))
     aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
     precipitable_water = st.slider("Precipitable Water", 0.0, 10.0, 2.0)
@@ -92,13 +88,6 @@ with col3:
     azimuth_bin = st.selectbox("Azimuth Bin", list(range(8)))
     zenith_bin = st.selectbox("Zenith Bin", list(range(9)))
 
-# Calculate time features
-month = date.month
-day = date.day
-year = date.year
-day_of_week = date.weekday()
-day_of_year = date.timetuple().tm_yday
-week_of_year = date.isocalendar()[1]
 
 # Predict button
 if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
@@ -119,14 +108,7 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
         'Best_Tilt': [best_tilt],
         'Azimuth_Bin': [azimuth_bin],
         'Zenith_Bin': [zenith_bin],
-        'Year': [year],
-        'Month': [month],
-        'Day': [day],
-        'Hour': [hour],
-        'DayOfWeek': [day_of_week],
-        'DayOfYear': [day_of_year],
-        'WeekOfYear': [week_of_year]
-    })
+        })
     
     # Make prediction
     prediction = model.predict(input_data)[0]
@@ -151,3 +133,4 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+
