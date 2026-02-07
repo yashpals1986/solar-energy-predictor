@@ -62,28 +62,27 @@ with col1:
     st.subheader("🔆 Solar Position (Most Important!)")
     azimuth = st.slider("Azimuth Angle (°)", 0.0, 360.0, 180.0, 1.0, 
                         help="Most important feature! Sun's horizontal position")
-    azimuth_bin = st.selectbox("Azimuth Bin", list(range(8)), index=4,
-                               help="Binned azimuth (0-7)")
-    elevation = st.slider("Elevation Angle (°)", 0.0, 90.0, 45.0, 1.0,
+    azimuth_bin = st.slider("Azimuth Bin", 0.0, 360.0, 180.0, 1.0)
+    elevation = st.slider("Elevation Angle (°)", -90.0, 90.0, 45.0, 1.0,
                          help="Sun's height above horizon")
-    zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 45.0, 1.0,
+    zenith = st.slider("Zenith Angle (°)", 0.0, 180.0, 45.0, 1.0,
                       help="Angle from directly overhead")
     
 with col2:
     st.subheader("⏰ Time")
-    hour = st.slider("Hour", 0, 23, 12,
+    hour = st.slider("Hour", 0, 23, 12, 0.25,
                     help="Hour of day (0-23)")
     
     st.subheader("🌡️ Weather")
-    temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0, 0.5)
-    aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.15, 0.01,
+    temperature = st.slider("Temperature (°C)", 0.0, 50.0, 25.0, 0.5)
+    aerosol = st.slider("Aerosol Optical Depth", 0.0, 1.5, 0.15, 0.01,
                        help="Air clarity measure")
     
 with col3:
     st.subheader("⚙️ Panel Config")
     best_tilt = st.slider("Best Tilt (°)", 0.0, 90.0, 30.0, 1.0,
                          help="Optimal panel angle")
-    zenith_bin = st.selectbox("Zenith Bin", list(range(9)), index=4,
+    zenith_bin = st.slider("Zenith Bin", 0.0, 180.0, 45.0, 1.0,
                              help="Binned zenith (0-8)")
 
 # Predict button
@@ -183,4 +182,5 @@ with st.expander("💡 Tips for Best Predictions"):
     - **Noon:** azimuth=180°, hour=12, elevation=60°
     - **Evening:** azimuth=270°, hour=18, elevation=20°
     """)
+
 
