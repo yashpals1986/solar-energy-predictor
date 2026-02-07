@@ -133,21 +133,7 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
         col2.metric("🏠 For 1kW System", f"{prediction * 0.001:.2f} kWh",
                    help="Multiply by your system size")
         
-        # Quality rating
-        if prediction > 800:
-            quality = "Excellent ⭐⭐⭐"
-            color = "🟢"
-        elif prediction > 500:
-            quality = "Good ⭐⭐"
-            color = "🟡"
-        elif prediction > 200:
-            quality = "Fair ⭐"
-            color = "🟠"
-        else:
-            quality = "Poor ❌"
-            color = "🔴"
-        col3.metric("📊 Quality", f"{color} {quality}")
-        
+                
         # Show what was predicted
         with st.expander("📋 See Input Details"):
             st.write("**User Inputs (9 important features):**")
@@ -197,3 +183,4 @@ with st.expander("💡 Tips for Best Predictions"):
     - **Noon:** azimuth=180°, hour=12, elevation=60°
     - **Evening:** azimuth=270°, hour=18, elevation=20°
     """)
+
