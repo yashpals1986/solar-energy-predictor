@@ -50,14 +50,14 @@ with col1:
     st.subheader("🌦️ Weather")
     temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
     humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
-    pressure = st.slider("Pressure (hPa)", 900.0, 1100.0, 1013.0)
     wind_speed = st.slider("Wind Speed (m/s)", 0.0, 30.0, 5.0)
     wind_direction = st.slider("Wind Direction (°)", 0, 360, 180)
     
 with col2:
     st.subheader("🌩️ Atmosphere")
     aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
-         
+    hour = st.sidebar.slider("Hour", 0, 23, 12)
+    minute = st.sidebar.slider("Minute", 0, 59, 0)     
 with col3:
     st.subheader("🔆 Solar Position")
     zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 30.0)
@@ -82,7 +82,9 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
         'Best_Tilt': [best_tilt],
         'Azimuth_Bin': [azimuth_bin],
         'Zenith_Bin': [zenith_bin],
-        })
+        'Hour': [Hour],
+        'Minute': [Minute],
+         })
     
     # Make prediction
     prediction = model.predict(input_data)[0]
@@ -107,6 +109,7 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+
 
 
 
