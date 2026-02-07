@@ -1,187 +1,153 @@
 import streamlit as st
-import joblib
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import joblib
+import requests
+import os
+from datetime import datetime
 
-# ===============================
-# Page Config
-# ===============================
-st.set_page_config(
-    page_title="Solar Energy Predictor",
-    page_icon="☀️",
-    layout="wide"
-)
+# Page config
+st.set_page_config(page_title="Solar Energy Predictor", page_icon="☀️", layout="wide")
 
-# ===============================
-# Load Resources
-# ===============================
+
+
+
+
+# At the top, replace the download function:
+
 @st.cache_resource
-def load_resources():
-    model = joblib.load("xgboost_tuned_v2.0.pkl")
-    train_df = pd.read_csv("train.csv")
-
-    ALL_FEATURES = [
-        'Temperature', 'Aerosol Optical Depth', 'Clearsky DNI', 'Dew Point', 'Cloud Type',
-        'Clearsky GHI', 'DHI', 'Clearsky DHI', 'DNI', 'Relative Humidity',
-        'Pressure', 'Wind Speed', 'Wind Direction', 'Precipitable Water', 'zenith',
-        'azimuth', 'elevation', 'Best_Tilt', 'Azimuth_Bin', 'Zenith_Bin',
-        'Year', 'Month', 'Day', 'Hour', 'DayOfWeek', 'DayOfYear', 'WeekOfYear'
-    ]
-
-    # Defaults (Median)
-    DEFAULT_DICT = train_df[ALL_FEATURES].median().to_dict()
-
-    # Error stats
-    train_df["Predicted"] = model.predict(train_df[ALL_FEATURES])
-    train_df["Error"] = abs(train_df["Predicted"] - train_df["Predicted_Energy"])
-    train_df["Error_Pct"] = (train_df["Error"] / (train_df["Predicted_Energy"] + 0.1)) * 100
-
-    ERROR_BY_HOUR = train_df.groupby("Hour")["Error"].mean().to_dict()
-    ERROR_PCT_BY_HOUR = train_df.groupby("Hour")["Error_Pct"].mean().to_dict()
-
-    return model, train_df, ALL_FEATURES, DEFAULT_DICT, ERROR_BY_HOUR, ERROR_PCT_BY_HOUR
-
-model, train_df, FEATURES, DEFAULTS, ERR_HOUR, ERR_PCT = load_resources()
-
-# ===============================
-# Header
-# ===============================
-st.markdown(
-    """
-    <h1 style="text-align:center;">☀️ Solar Energy Production Predictor</h1>
-    <p style="text-align:center;color:gray;">
-    XGBoost Model | Test data R² = 0.994608501, MAE = 2.667902073 | Rajasthan Dataset
-    </p>
-    """,
-    unsafe_allow_html=True
-)
-
-# ===============================
-# Sidebar Inputs
-# ===============================
-st.sidebar.header("⚙️ Input Parameters")
-
-ghi = st.sidebar.number_input("Clearsky GHI (W/m²)", 0.0, 1200.0, 800.0)
-dni = st.sidebar.number_input("Clearsky DNI (W/m²)", 0.0, 1200.0, 850.0)
-dhi = st.sidebar.number_input("Clearsky DHI (W/m²)", 0.0, 544.0, 120.0)
-
-tilt = st.sidebar.slider("Best Tilt (°)", 0.0, 90.0, 30.0)
-
-hour = st.sidebar.slider("Hour", 0, 23, 12)
-minute = st.sidebar.slider("Minute", 0, 59, 0)
-
-zenith = st.sidebar.slider("Zenith (°)", 0.0, 180.0, 30.0)
-azimuth = st.sidebar.slider("Azimuth (°)", 0.0, 360.0, 180.0)
-
-azimuth_bin = st.sidebar.slider("Azimuth Bin", 0.0, 360.0, 180.0, step=0.5)
-zenith_bin = st.sidebar.slider("Zenith Bin", 0.0, 180.0, 30.0, step=2.0)
-
-elevation = st.sidebar.slider("Elevation (°)", -90.0, 90.0, 60.0, step=0.5)
-
-
-# ===============================
-# Prediction
-# ===============================
-if st.sidebar.button("🔮 Predict"):
-
-    # Time
-    time_display = f"{hour:02d}:{minute:02d}"
-
-    # Defaults
-    input_dict = DEFAULTS.copy()
-
-    # Update
-    input_dict.update({
-        "Clearsky GHI": ghi,
-        "Clearsky DNI": dni,
-        "Clearsky DHI": dhi,
-        "Best_Tilt": tilt,
-        "Hour": hour,
-        "zenith": zenith,
-        "azimuth": azimuth,
-        "Azimuth_Bin": azimuth_bin,
-        "elevation": elevation,
-        "Zenith_Bin": zenith_bin
-    })
-
-    # Predict
-    input_df = pd.DataFrame([input_dict])[FEATURES]
-    pred = model.predict(input_df)[0]
-
-    # ===============================
-    # KPIs
-    # ===============================
-    c1, c2, c3 = st.columns(3)
-
-    c1.metric("⚡ Energy (kWh)", f"{pred:.2f}")
-    c2.metric("🕒 Time", time_display)
+def download_model_from_huggingface():
+    """Download model from Hugging Face"""
+    if os.path.exists('model.pkl'):
+        return joblib.load('model.pkl')
     
+    # ⚠️ REPLACE WITH YOUR HUGGING FACE URL
+    url = "https://huggingface.co/ysuwansia/solar/resolve/main/final_production_model.pkl"
+    
+    with st.spinner('⏳ Downloading model (first time only)...'):
+        response = requests.get(url, stream=True)
+        with open('model.pkl', 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+    
+    return joblib.load('model.pkl')
 
-    # ===============================
-    # Error Info
-    # ===============================
-    if hour in ERR_HOUR:
-        err = ERR_HOUR[hour]
-        acc = 100 - ERR_PCT[hour]
-    else:
-        err = 7.5
-        acc = 92.0
+model = download_model_from_huggingface()
 
-    st.info(
-        f"""
-        📊 **Expected Accuracy**
 
-        | Typical Error: ± {err:.1f} kWh |........| Accuracy: {acc:.1f} % |.......| Samples: {len(train_df[train_df["Hour"] == hour])} |
-        """
-    )
 
-    # ===============================
-    # Charts SIDE BY SIDE
-    # ===============================
-    col1, col2 = st.columns(2)
 
-    with col1:
-        st.subheader("📈 Hourly Prediction Error")
-        hours = list(ERR_HOUR.keys())
-        errors = list(ERR_HOUR.values())
 
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(hours, errors, marker="o", linewidth=2, markersize=6)
-        ax.set_xlabel("Hour")
-        ax.set_ylabel("Mean Error (kWh)")
-        ax.set_title("Error vs Hour")
-        ax.grid(True, alpha=0.3)
-        st.pyplot(fig)
 
-    with col2:
-        st.subheader("📉 Energy Distribution")
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        ax2.hist(train_df["Predicted_Energy"], bins=40, alpha=0.7, color='#ff9500')
-        ax2.set_xlabel("Energy (kWh)")
-        ax2.set_ylabel("Frequency")
-        ax2.set_title("Training Data Distribution")
-        ax2.grid(True, alpha=0.3)
-        st.pyplot(fig2)
 
-# ===============================
-# Footer - PERFECTLY CENTERED
-# ===============================
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
+
+
+
+
+
+
+
+# Header
+st.title("☀️ Solar Energy Prediction System")
+st.markdown("Predict solar energy generation using Machine Learning")
+
+# Sidebar info
+st.sidebar.title("📊 Model Info")
+st.sidebar.metric("Model", "Random Forest")
+st.sidebar.metric("Test MAE", "10.83")
+st.sidebar.metric("Accuracy", "93.4%")
+
+# Main prediction interface
+st.header("🔮 Energy Prediction")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.subheader("🌡️ Weather")
+    temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
+    humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
+    pressure = st.slider("Pressure (hPa)", 900.0, 1100.0, 1013.0)
+    wind_speed = st.slider("Wind Speed (m/s)", 0.0, 30.0, 5.0)
+    wind_direction = st.slider("Wind Direction (°)", 0, 360, 180)
+    dew_point = st.slider("Dew Point (°C)", -30.0, 40.0, 15.0)
+
 with col2:
-    st.markdown(
-        "<p style='text-align: center; color: gray; font-size: 14px;'>"
-        "**Developed by Yashpal Suwansia | IIT Bombay 2010**"
-        "</p>",
-        unsafe_allow_html=True
-    )
+    st.subheader("☁️ Atmosphere")
+    cloud_type = st.selectbox("Cloud Type", list(range(11)))
+    aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
+    precipitable_water = st.slider("Precipitable Water", 0.0, 10.0, 2.0)
+    
+    st.subheader("📅 Date/Time")
+    date = st.date_input("Date", datetime.now())
+    hour = st.slider("Hour", 0, 23, 12)
+
+with col3:
+    st.subheader("🔆 Solar Position")
+    zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 30.0)
+    azimuth = st.slider("Azimuth Angle (°)", 0.0, 360.0, 180.0)
+    elevation = st.slider("Elevation Angle (°)", 0.0, 90.0, 60.0)
+    
+    st.subheader("⚙️ Panel Config")
+    best_tilt = st.slider("Best Tilt (°)", 0.0, 90.0, 30.0)
+    azimuth_bin = st.selectbox("Azimuth Bin", list(range(8)))
+    zenith_bin = st.selectbox("Zenith Bin", list(range(9)))
+
+# Calculate time features
+month = date.month
+day = date.day
+year = date.year
+day_of_week = date.weekday()
+day_of_year = date.timetuple().tm_yday
+week_of_year = date.isocalendar()[1]
+
+# Predict button
+if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
+    # Create input dataframe
+    input_data = pd.DataFrame({
+        'Temperature': [temperature],
+        'Aerosol Optical Depth': [aerosol],
+        'Dew Point': [dew_point],
+        'Cloud Type': [cloud_type],
+        'Relative Humidity': [humidity],
+        'Pressure': [pressure],
+        'Wind Speed': [wind_speed],
+        'Wind Direction': [wind_direction],
+        'Precipitable Water': [precipitable_water],
+        'zenith': [zenith],
+        'azimuth': [azimuth],
+        'elevation': [elevation],
+        'Best_Tilt': [best_tilt],
+        'Azimuth_Bin': [azimuth_bin],
+        'Zenith_Bin': [zenith_bin],
+        'Year': [year],
+        'Month': [month],
+        'Day': [day],
+        'Hour': [hour],
+        'DayOfWeek': [day_of_week],
+        'DayOfYear': [day_of_year],
+        'WeekOfYear': [week_of_year]
+    })
+    
+    # Make prediction
+    prediction = model.predict(input_data)[0]
+    
+    # Display result
+    st.success("✅ Prediction Complete!")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Predicted Energy", f"{prediction:.2f} Wh/m²")
+    col2.metric("For 1kW System", f"{prediction * 0.001:.2f} Wh")
+    
+    if prediction > 800:
+        quality = "Excellent ⭐⭐⭐"
+    elif prediction > 500:
+        quality = "Good ⭐⭐"
+    elif prediction > 200:
+        quality = "Fair ⭐"
+    else:
+        quality = "Poor ❌"
+    col3.metric("Quality", quality)
+
+# Footer
 st.markdown("---")
-
-
-
-
-
-
-
-
+st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
