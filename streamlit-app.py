@@ -1,186 +1,268 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import requests
-import os
-from datetime import datetime
 
-# Page config
-st.set_page_config(page_title="Solar Energy Predictor", page_icon="☀️", layout="wide")
+# Set page configuration
+st.set_page_config(page_title="Solar Energy Prediction", layout="wide")
 
+# Title
+st.title("☀️ Solar Energy Production Predictor")
+
+# Load the trained model (make sure to save your model first)
 @st.cache_resource
-def download_model_from_huggingface():
-    """Download model from Hugging Face"""
-    if os.path.exists('model.pkl'):
-        return joblib.load('model.pkl')
-    
-    url = "https://huggingface.co/ysuwansia/solar/resolve/main/final_production_model.pkl"
-    
-    with st.spinner('⏳ Downloading model (first time only)...'):
-        response = requests.get(url, stream=True)
-        with open('model.pkl', 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-    
-    return joblib.load('model.pkl')
+def load_model():
+    try:
+        model = joblib.load('solar_energy_model.pkl')  # Update with your model path
+        return model
+    except:
+        st.warning("Model not loaded. Using dummy predictions.")
+        return None
 
-model = download_model_from_huggingface()
+model = load_model()
 
-# Header
-st.title("☀️ Solar Energy Prediction System")
-st.markdown("Predict solar energy generation using Machine Learning")
+# Load the data to get feature statistics
+@st.cache_data
+def load_data():
+    df = pd.read_csv('data_with_features.csv')
+    return df
 
-# Sidebar info
-st.sidebar.title("📊 Model Info")
-st.sidebar.metric("Model", "Random Forest")
-st.sidebar.metric("Test MAE", "10.83")
-st.sidebar.metric("Accuracy", "93.4%")
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 🎯 Top 9 Important Features")
-st.sidebar.markdown("""
-1. **azimuth** (35.7%)
-2. **Azimuth_Bin** (19.3%)
-3. **Hour** (16.5%)
-4. **Best_Tilt** (9.4%)
-5. **elevation** (8.0%)
-6. **zenith** (6.2%)
-7. **Zenith_Bin** (2.3%)
-8. **Temperature** (1.0%)
-9. **Aerosol** (0.6%)
+df = load_data()
 
-*Other features: auto-filled*
-""")
+# Sidebar for input features
+st.sidebar.header("Input Features")
 
-# Main prediction interface
-st.header("🔮 Energy Prediction")
-st.info("💡 Enter only the 9 most important features. Others are auto-filled with optimal defaults.")
-
-col1, col2, col3 = st.columns(3)
+# Create two columns for better layout
+col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("🔆 Solar Position (Most Important!)")
-    azimuth = st.slider("Azimuth Angle (°)", 0.0, 360.0, 180.0, 1.0, 
-                        help="Most important feature! Sun's horizontal position")
-    azimuth_bin = st.slider("Azimuth Bin", 0.0, 360.0, 180.0, 1.0)
-    elevation = st.slider("Elevation Angle (°)", -90.0, 90.0, 45.0, 1.0,
-                         help="Sun's height above horizon")
-    zenith = st.slider("Zenith Angle (°)", 0.0, 180.0, 45.0, 1.0,
-                      help="Angle from directly overhead")
-    
-with col2:
-    st.subheader("⏰ Time")
-    hour = st.slider("Hour", 0, 23, 12, 0.25,
-                    help="Hour of day (0-23)")
-    
-    st.subheader("🌡️ Weather")
-    temperature = st.slider("Temperature (°C)", 0.0, 50.0, 25.0, 0.5)
-    aerosol = st.slider("Aerosol Optical Depth", 0.0, 1.5, 0.15, 0.01,
-                       help="Air clarity measure")
-    
-with col3:
-    st.subheader("⚙️ Panel Config")
-    best_tilt = st.slider("Best Tilt (°)", 0.0, 90.0, 30.0, 1.0,
-                         help="Optimal panel angle")
-    zenith_bin = st.slider("Zenith Bin", 0.0, 180.0, 45.0, 1.0,
-                             help="Binned zenith (0-8)")
+    st.subheader("Solar Position Parameters")
 
-# Predict button
-if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
-    
-    # Get current date for auto-filled features
-    now = datetime.now()
-    day_of_year = now.timetuple().tm_yday
-    
-    # ✅ Create input with ALL 22 features in EXACT order model expects
-    input_data = pd.DataFrame({
-        'Temperature': [temperature],                    # User input (important)
-        'Aerosol Optical Depth': [aerosol],             # User input (important)
-        'Dew Point': [15.0],                            # Auto: default
-        'Cloud Type': [0],                              # Auto: clear sky
-        'Relative Humidity': [50.0],                    # Auto: default
-        'Pressure': [1013.25],                          # Auto: standard pressure
-        'Wind Speed': [3.0],                            # Auto: light wind
-        'Wind Direction': [180.0],                      # Auto: south
-        'Precipitable Water': [1.5],                    # Auto: default
-        'zenith': [zenith],                             # User input (important)
-        'azimuth': [azimuth],                           # User input (MOST important!)
-        'elevation': [elevation],                        # User input (important)
-        'Best_Tilt': [best_tilt],                       # User input (important)
-        'Azimuth_Bin': [azimuth_bin],                   # User input (important)
-        'Zenith_Bin': [zenith_bin],                     # User input (important)
-        'Year': [now.year],                             # Auto: current year
-        'Month': [now.month],                           # Auto: current month
-        'Day': [now.day],                               # Auto: current day
-        'Hour': [hour],                                 # User input (important)
-        'DayOfWeek': [now.weekday()],                  # Auto: current day of week
-        'DayOfYear': [day_of_year],                    # Auto: current day of year
-        'WeekOfYear': [now.isocalendar()[1]],          # Auto: current week
-    })
-    
-    try:
-        # Make prediction
-        prediction = model.predict(input_data)[0]
-        
-        # Display result with nice formatting
-        st.success("✅ Prediction Complete!")
-        
-        # Main metrics
-        col1, col2, col3 = st.columns(3)
-        col1.metric("⚡ Predicted Energy", f"{prediction:.2f} Wh/m²", 
-                   help="Energy per square meter")
-        col2.metric("🏠 For 1kW System", f"{prediction * 0.001:.2f} kWh",
-                   help="Multiply by your system size")
-        
-                
-        # Show what was predicted
-        with st.expander("📋 See Input Details"):
-            st.write("**User Inputs (9 important features):**")
-            important_features = {
-                'azimuth': azimuth,
-                'Azimuth_Bin': azimuth_bin,
-                'Hour': hour,
-                'Best_Tilt': best_tilt,
-                'elevation': elevation,
-                'zenith': zenith,
-                'Zenith_Bin': zenith_bin,
-                'Temperature': temperature,
-                'Aerosol Optical Depth': aerosol
-            }
-            st.json(important_features)
-            
-            st.write("**Auto-filled features (13 less important):**")
-            st.caption("These have minimal impact on prediction (<1% each)")
-            
-    except Exception as e:
-        st.error(f"❌ Prediction Error!")
-        st.write("Debug info:")
-        st.write(f"Input columns: {list(input_data.columns)}")
-        st.write(f"Model expects: {list(model.feature_names_in_)}")
-        st.write(f"Error: {str(e)}")
+    # Azimuth - continuous value (original data range: 8.448 to 352.599)
+    azimuth = st.slider(
+        "Azimuth (degrees)", 
+        min_value=0.0, 
+        max_value=360.0, 
+        value=180.0, 
+        step=1.0,
+        help="Solar azimuth angle (0-360°). Range in data: 8.4° to 352.6°"
+    )
+
+    # Zenith - continuous value (original data range: 7.093 to 174.052)
+    zenith = st.slider(
+        "Zenith (degrees)", 
+        min_value=0.0, 
+        max_value=180.0, 
+        value=45.0, 
+        step=1.0,
+        help="Solar zenith angle (0-180°). Range in data: 7.1° to 174.1°"
+    )
+
+    # Calculate elevation from zenith
+    elevation = 90 - zenith
+    st.info(f"**Calculated Elevation:** {elevation:.1f}°")
+
+    # Create bins similar to the training data
+    azimuth_bin = int(round(azimuth / 5) * 5)  # Round to nearest 5
+    zenith_bin = int(round(zenith / 2) * 2)     # Round to nearest 2
+
+    st.caption(f"Azimuth Bin: {azimuth_bin}° | Zenith Bin: {zenith_bin}°")
+
+with col2:
+    st.subheader("Time Parameters")
+
+    # Hour (0-23, representing measurements at XX:30:00)
+    hour = st.slider(
+        "Hour of Day", 
+        min_value=0, 
+        max_value=23, 
+        value=12,
+        help="Hour of day (0-23). Actual measurements at XX:30 minutes"
+    )
+
+    # Month
+    month = st.selectbox(
+        "Month",
+        options=list(range(1, 13)),
+        index=5,  # June
+        format_func=lambda x: [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ][x-1]
+    )
+
+    # Day
+    day = st.slider("Day of Month", min_value=1, max_value=31, value=15)
+
+    # Day of Week
+    day_of_week = st.selectbox(
+        "Day of Week",
+        options=list(range(0, 7)),
+        index=2,
+        format_func=lambda x: ["Monday", "Tuesday", "Wednesday", "Thursday", 
+                               "Friday", "Saturday", "Sunday"][x]
+    )
+
+# Additional Features Section
+st.sidebar.subheader("Weather & Environmental Parameters")
+
+# Temperature
+temperature = st.sidebar.slider(
+    "Temperature (°C)",
+    min_value=float(df['Temperature'].min()),
+    max_value=float(df['Temperature'].max()),
+    value=float(df['Temperature'].mean()),
+    step=0.1
+)
+
+# DNI (Direct Normal Irradiance)
+dni = st.sidebar.slider(
+    "DNI (W/m²)",
+    min_value=float(df['DNI'].min()),
+    max_value=float(df['DNI'].max()),
+    value=float(df['DNI'].mean()),
+    step=10.0
+)
+
+# DHI (Diffuse Horizontal Irradiance)
+dhi = st.sidebar.slider(
+    "DHI (W/m²)",
+    min_value=float(df['DHI'].min()),
+    max_value=float(df['DHI'].max()),
+    value=float(df['DHI'].mean()),
+    step=10.0
+)
+
+# Clearsky DNI
+clearsky_dni = st.sidebar.slider(
+    "Clearsky DNI (W/m²)",
+    min_value=float(df['Clearsky DNI'].min()),
+    max_value=float(df['Clearsky DNI'].max()),
+    value=float(df['Clearsky DNI'].mean()),
+    step=10.0
+)
+
+# Clearsky GHI
+clearsky_ghi = st.sidebar.slider(
+    "Clearsky GHI (W/m²)",
+    min_value=float(df['Clearsky GHI'].min()),
+    max_value=float(df['Clearsky GHI'].max()),
+    value=float(df['Clearsky GHI'].mean()),
+    step=10.0
+)
+
+# Relative Humidity
+relative_humidity = st.sidebar.slider(
+    "Relative Humidity (%)",
+    min_value=float(df['Relative Humidity'].min()),
+    max_value=float(df['Relative Humidity'].max()),
+    value=float(df['Relative Humidity'].mean()),
+    step=0.1
+)
+
+# Wind Speed
+wind_speed = st.sidebar.slider(
+    "Wind Speed (m/s)",
+    min_value=float(df['Wind Speed'].min()),
+    max_value=float(df['Wind Speed'].max()),
+    value=float(df['Wind Speed'].mean()),
+    step=0.1
+)
+
+# Create input dataframe
+input_data = pd.DataFrame({
+    'Temperature': [temperature],
+    'Aerosol Optical Depth': [df['Aerosol Optical Depth'].mean()],
+    'Clearsky DNI': [clearsky_dni],
+    'Dew Point': [df['Dew Point'].mean()],
+    'Cloud Type': [df['Cloud Type'].mode()[0]],
+    'Clearsky GHI': [clearsky_ghi],
+    'DHI': [dhi],
+    'Clearsky DHI': [df['Clearsky DHI'].mean()],
+    'DNI': [dni],
+    'Relative Humidity': [relative_humidity],
+    'Pressure': [df['Pressure'].mean()],
+    'Wind Speed': [wind_speed],
+    'Wind Direction': [df['Wind Direction'].mean()],
+    'Precipitable Water': [df['Precipitable Water'].mean()],
+    'zenith': [zenith],
+    'azimuth': [azimuth],
+    'elevation': [elevation],
+    'Best_Tilt': [df['Best_Tilt'].mean()],
+    'Azimuth_Bin': [azimuth_bin],
+    'Zenith_Bin': [zenith_bin],
+    'Year': [2017],
+    'Month': [month],
+    'Day': [day],
+    'Hour': [hour],
+    'DayOfWeek': [day_of_week],
+    'DayOfYear': [df['DayOfYear'].mean()],
+    'WeekOfYear': [df['WeekOfYear'].mean()]
+})
+
+# Display input summary
+st.subheader("📊 Input Summary")
+col3, col4, col5 = st.columns(3)
+
+with col3:
+    st.metric("Azimuth", f"{azimuth:.1f}°", f"Bin: {azimuth_bin}°")
+    st.metric("Zenith", f"{zenith:.1f}°", f"Bin: {zenith_bin}°")
+    st.metric("Elevation", f"{elevation:.1f}°")
+
+with col4:
+    st.metric("Hour", f"{hour}:30", "Half-hourly data")
+    st.metric("Month-Day", f"{month:02d}-{day:02d}")
+    st.metric("Temperature", f"{temperature:.1f}°C")
+
+with col5:
+    st.metric("DNI", f"{dni:.0f} W/m²")
+    st.metric("DHI", f"{dhi:.0f} W/m²")
+    st.metric("Humidity", f"{relative_humidity:.1f}%")
+
+# Prediction button
+if st.button("🔮 Predict Energy Production", type="primary"):
+    if model is not None:
+        try:
+            # Make prediction
+            prediction = model.predict(input_data)
+
+            st.success("✅ Prediction Complete!")
+            st.subheader("⚡ Predicted Energy Production")
+
+            # Display prediction with large font
+            st.markdown(f"### **{prediction[0]:.2f} kWh**")
+
+            # Display confidence interval (if available)
+            if hasattr(model, 'predict_proba'):
+                st.info("📈 Model confidence metrics available")
+
+        except Exception as e:
+            st.error(f"❌ Prediction Error: {str(e)}")
+            st.write("Input data shape:", input_data.shape)
+            st.write("Columns:", input_data.columns.tolist())
+    else:
+        # Dummy prediction for demonstration
+        dummy_prediction = max(0, dni * 0.15 + dhi * 0.1 - zenith * 0.5 + hour * 2)
+        st.warning("⚠️ Using dummy prediction (model not loaded)")
+        st.markdown(f"### **{dummy_prediction:.2f} kWh** (Estimated)")
+
+# Show data statistics
+with st.expander("📈 View Data Statistics"):
+    st.write("**Dataset Overview:**")
+    st.write(f"- Total Records: {len(df)}")
+    st.write(f"- Date Range: {df['Date'].min()} to {df['Date'].max()}")
+    st.write(f"- Azimuth Range: {df['azimuth'].min():.2f}° to {df['azimuth'].max():.2f}°")
+    st.write(f"- Zenith Range: {df['zenith'].min():.2f}° to {df['zenith'].max():.2f}°")
+    st.write(f"- Temperature Range: {df['Temperature'].min():.1f}°C to {df['Temperature'].max():.1f}°C")
+
+    st.write("\n**Key Statistics:**")
+    st.dataframe(df[['Temperature', 'DNI', 'DHI', 'azimuth', 'zenith', 'Predicted_Energy']].describe())
+
+# Show sample data
+with st.expander("🔍 View Sample Data"):
+    st.dataframe(df.head(10))
 
 # Footer
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center'>
-    <p><strong>Developed by Yashpal Suwansia</strong></p>
-    <p>Powered by Streamlit & Scikit-learn | Based on SHAP Feature Analysis</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Tips section
-with st.expander("💡 Tips for Best Predictions"):
-    st.markdown("""
-    **Most Important Settings:**
-    1. **Azimuth (35.7% importance)**: Sun's compass direction
-       - 90° = East (morning), 180° = South (noon), 270° = West (evening)
-    2. **Hour (16.5%)**: Time of day matters a lot!
-    3. **Best_Tilt (9.4%)**: Panel angle optimization
-    
-    **Quick Scenarios:**
-    - **Morning:** azimuth=90°, hour=8, elevation=30°
-    - **Noon:** azimuth=180°, hour=12, elevation=60°
-    - **Evening:** azimuth=270°, hour=18, elevation=20°
-    """)
-
-
+st.caption("Solar Energy Prediction System | Data-driven renewable energy forecasting")
