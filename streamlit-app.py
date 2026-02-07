@@ -1,15 +1,17 @@
 import streamlit as st
+import joblib
 import pandas as pd
 import numpy as np
-import joblib
-import requests
-import os
-from datetime import datetime
+import matplotlib.pyplot as plt
 
-# Page config
-st.set_page_config(page_title="Solar Energy Predictor", page_icon="☀️", layout="wide")
-
-
+# ===============================
+# Page Config
+# ===============================
+st.set_page_config(
+    page_title="Solar Energy Predictor",
+    page_icon="☀️",
+    layout="wide"
+)
 # At the top, replace the download function:
 
 @st.cache_resource
@@ -31,91 +33,100 @@ def download_model_from_huggingface():
 
 model = download_model_from_huggingface()
 
-
-
+# ===============================
 # Header
-st.title("☀️ Solar Energy Prediction System")
-st.markdown("Predict solar energy generation using Machine Learning")
+# ===============================
+st.markdown(
+    """
+    <h1 style="text-align:center;">☀️ Solar Energy Production Predictor</h1>
+    <p style="text-align:center;color:gray;">
+    RF Model | 93% R² | Rajasthan Dataset
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+# ===============================
+# Sidebar Inputs
+# ===============================
+'Hour': [hour], 
+'Temperature': [temperature], 
+'elevation': [elevation], 
+'Aerosol Optical Depth': [aerosol],  
+'zenith': [zenith],  
+'azimuth': [azimuth],           
+'Best_Tilt': [best_tilt],       
+'Azimuth_Bin': [azimuth_bin],        
+'Zenith_Bin': [zenith_bin],        
 
-# Sidebar info
-st.sidebar.title("📊 Model Info")
-st.sidebar.metric("Model", "Random Forest")
-st.sidebar.metric("Test MAE", "10.83")
-st.sidebar.metric("Accuracy", "93.4%")
+st.sidebar.header("⚙️ Input Parameters")
+Hour = st.sidebar.number_input("Hour", 0.0, 23, 12)
+Temperature = st.sidebar.number_input("Temperature(degree)", 0.0, 50, 25)
+elevation = st.sidebar.number_input("elevation", -90.0, 90.0, 0.0)
+Aerosol Optical Depth = st.sidebar.slider("Aerosol Optical Depth (°)", 0.0, 1.5, 0.7)
+azimuth = st.sidebar.slider("azimuth", 0, 59, 0)
+Azimuth_Bin = st.sidebar.slider("Azimuth_Bin (°)", 0.0, 180.0, 30.0)
+zenith = st.sidebar.slider("zenith", 0, 23, 12)
+Zenith_Bin = st.sidebar.slider("Zenith_Bin (°)", 0.0, 360.0, 180.0)
+Best_Tilt = st.sidebar.slider("Best_Tilt", 0.0, 360.0, 180.0, step=0.5)
 
-# Main prediction interface
-st.header("🔮 Energy Prediction")
+# ===============================
+# Prediction
+# ===============================
+if st.sidebar.button("🔮 Predict"):
 
-col1, col2, col3 = st.columns(3)
+    # Time
+    time_display = f"{hour:02d}:{minute:02d}"
 
-with col1:
-    st.subheader("🌡️ Weather")
-    temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
-    humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
-      
+    # Defaults
+    input_dict = DEFAULTS.copy()
 
-with col2:
-    st.subheader("📅 Date/Time")
-    hour = st.slider("Hour", 0.0, 23.0, 1.0)
-    st.subheader("☁️ Atmosphere")
-    aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
-
-with col3:
-    st.subheader("🔆 Solar Position")
-    zenith = st.slider("Zenith Angle (°)", 0.0, 180.0, 30.0)
-    azimuth = st.slider("Azimuth Angle (°)", 0.0, 360.0, 180.0)
-    elevation = st.slider("Elevation Angle (°)", 0.0, 90.0, 60.0)
-    
-    st.subheader("⚙️ Panel Config")
-    best_tilt = st.slider("Best Tilt (°)", 0.0, 90.0, 30.0)
-    azimuth_bin = st.selectbox("Azimuth Bin", list(range(360)))
-    zenith_bin = st.selectbox("Zenith Bin", list(range(180)))
-
-# Calculate time features
-month = date.month
-day = date.day
-year = date.year
-day_of_week = date.weekday()
-day_of_year = date.timetuple().tm_yday
-week_of_year = date.isocalendar()[1]
-
-# Predict button
-if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
-    # Create input dataframe
-    input_data = pd.DataFrame({
+    # Update
+    input_dict.update({
         'Temperature': [temperature],
         'Aerosol Optical Depth': [aerosol],
-        'Relative Humidity': [humidity],
         'zenith': [zenith],
         'azimuth': [azimuth],
         'elevation': [elevation],
         'Best_Tilt': [best_tilt],
         'Azimuth_Bin': [azimuth_bin],
         'Zenith_Bin': [zenith_bin],
-        'Hour': [hour],
-         })
-    
-    # Make prediction
-    prediction = model.predict(input_data)[0]
-    
-    # Display result
-    st.success("✅ Prediction Complete!")
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Predicted Energy", f"{prediction:.2f} Wh/m²")
-    col2.metric("For 1kW System", f"{prediction * 0.001:.2f} Wh")
-    
-    if prediction > 800:
-        quality = "Excellent ⭐⭐⭐"
-    elif prediction > 500:
-        quality = "Good ⭐⭐"
-    elif prediction > 200:
-        quality = "Fair ⭐"
-    else:
-        quality = "Poor ❌"
-    col3.metric("Quality", quality)
+        'Hour': [hour]
+    })
 
-# Footer
+
+
+
+
+
+
+
+
+    
+    # Predict
+    input_df = pd.DataFrame([input_dict])[FEATURES]
+    pred = model.predict(input_df)[0]
+
+    # ===============================
+    # KPIs
+    # ===============================
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric("⚡ Energy (kWh)", f"{pred:.2f}")
+    c2.metric("🕒 Time", time_display)
+    
+# ===============================
+# Footer - PERFECTLY CENTERED
+# ===============================
 st.markdown("---")
-st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.markdown(
+        "<p style='text-align: center; color: gray; font-size: 14px;'>"
+        "**Developed by Yashpal Suwansia | IIT Bombay 2010**"
+        "</p>",
+        unsafe_allow_html=True
+    )
+st.markdown("---")
+
+
 
