@@ -52,31 +52,24 @@ with col1:
     st.subheader("🌡️ Weather")
     temperature = st.slider("Temperature (°C)", -20.0, 50.0, 25.0)
     humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
-    pressure = st.slider("Pressure (hPa)", 900.0, 1100.0, 1013.0)
-    wind_speed = st.slider("Wind Speed (m/s)", 0.0, 30.0, 5.0)
-    wind_direction = st.slider("Wind Direction (°)", 0, 360, 180)
-    dew_point = st.slider("Dew Point (°C)", -30.0, 40.0, 15.0)
+      
 
 with col2:
-    st.subheader("☁️ Atmosphere")
-    cloud_type = st.selectbox("Cloud Type", list(range(11)))
-    aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
-    precipitable_water = st.slider("Precipitable Water", 0.0, 10.0, 2.0)
-    
     st.subheader("📅 Date/Time")
-    date = st.date_input("Date", datetime.now())
-    hour = st.slider("Hour", 0, 23, 12)
+    hour = st.slider("Hour", 0.0, 23.0, 1.0)
+    st.subheader("☁️ Atmosphere")
+    aerosol = st.slider("Aerosol Optical Depth", 0.0, 2.0, 0.1)
 
 with col3:
     st.subheader("🔆 Solar Position")
-    zenith = st.slider("Zenith Angle (°)", 0.0, 90.0, 30.0)
+    zenith = st.slider("Zenith Angle (°)", 0.0, 180.0, 30.0)
     azimuth = st.slider("Azimuth Angle (°)", 0.0, 360.0, 180.0)
     elevation = st.slider("Elevation Angle (°)", 0.0, 90.0, 60.0)
     
     st.subheader("⚙️ Panel Config")
     best_tilt = st.slider("Best Tilt (°)", 0.0, 90.0, 30.0)
-    azimuth_bin = st.selectbox("Azimuth Bin", list(range(8)))
-    zenith_bin = st.selectbox("Zenith Bin", list(range(9)))
+    azimuth_bin = st.selectbox("Azimuth Bin", list(range(360)))
+    zenith_bin = st.selectbox("Zenith Bin", list(range(180)))
 
 # Calculate time features
 month = date.month
@@ -92,27 +85,15 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
     input_data = pd.DataFrame({
         'Temperature': [temperature],
         'Aerosol Optical Depth': [aerosol],
-        'Dew Point': [dew_point],
-        'Cloud Type': [cloud_type],
         'Relative Humidity': [humidity],
-        'Pressure': [pressure],
-        'Wind Speed': [wind_speed],
-        'Wind Direction': [wind_direction],
-        'Precipitable Water': [precipitable_water],
         'zenith': [zenith],
         'azimuth': [azimuth],
         'elevation': [elevation],
         'Best_Tilt': [best_tilt],
         'Azimuth_Bin': [azimuth_bin],
         'Zenith_Bin': [zenith_bin],
-        'Year': [year],
-        'Month': [month],
-        'Day': [day],
         'Hour': [hour],
-        'DayOfWeek': [day_of_week],
-        'DayOfYear': [day_of_year],
-        'WeekOfYear': [week_of_year]
-    })
+         })
     
     # Make prediction
     prediction = model.predict(input_data)[0]
@@ -137,3 +118,4 @@ if st.button("🔮 Predict Energy", type="primary", use_container_width=True):
 # Footer
 st.markdown("---")
 st.markdown("**Developed by Yashpal Suwansia** | Powered by Streamlit & Scikit-learn")
+
